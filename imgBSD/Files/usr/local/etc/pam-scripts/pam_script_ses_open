@@ -1,0 +1,60 @@
+#!/bin/sh
+#
+# Copyright (c) 2013 Ashley Diamond.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+
+if [ "$PAM_USER" == root ]; then exit 0; fi
+
+PATH=/usr/bin:/usr/sbin:/sbin:/bin
+
+check_mounts() {
+	for mount_point in $@; do
+		if df -t unionfs "${mount_point}" > /dev/null; then
+			echo "Forcing unmount of /${mount_point}"
+			umount -f /${mount_point}
+		fi
+	done
+}
+
+set -x
+USER="$PAM_USER"
+GROUP=`groups "$USER" | awk '{print $1}'`
+
+mount_top="/home/${USER}/.system"
+usr_mount="${mount_top}/usr_local"
+var_mount="${mount_top}/var_pbi"
+pbi_mount="${mount_top}/pbi"
+
+mkdir -p "$usr_mount" "$var_mount" "$pbi_mount"
+
+chown -R ${USER}:${GROUP} $mount_top
+
+check_mounts /usr/local /var/db/pbi /usr/pbi
+
+mount_unionfs $usr_mount /usr/local
+mount_unionfs $var_mount /var/db/pbi
+mount_unionfs $pbi_mount /usr/pbi
+
+exit 0

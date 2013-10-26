@@ -1,0 +1,286 @@
+#!/bin/sh
+#
+# Copyright (c) 2013 Ashley Diamond.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+
+set -e
+
+whoAmI() {
+	me=$(whoami)
+	[ "$me" = "root" ] || die "You must be root"
+}
+
+die() {
+	echo "$@"
+	exit 1
+}
+
+instructions() {
+        echo ""
+	echo "cfg add        = save a directory or file, \"cfg add /etc/pam.d\" to /cfg"
+	echo "cfg remove     = remove file or directory"
+	echo "cfg status     = status of unsaved files in /cfg"
+	echo "cfg list       = list all files in /cfg"
+	echo "cfg stale      = files in cfg that might not be needed"
+	echo "cfg backup <dest dir> = archive /cfg"
+	echo ""
+	echo "Quick saves:"
+	echo "cfg ssh        = save ssh keys to avoid being run every boot"
+	echo "cfg sync       = saves all unsaved changes to files in /cfg"
+	echo "cfg password   = Saves all password and group files"
+	echo ""
+	exit 0
+}
+
+check_cfg_mounted() {
+    echo "ToDo"
+}
+
+cfg_not_empty() {
+	if [ -n "$(ls -L /cfg)" ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+################################################################################
+### Functions that are read-only and dont require a rw mount
+
+stale() {
+    cd /cfg
+    echo "# Non-defaults in cfg"
+    for i in "$@" `find * -type f`;do
+        [ -e "/conf/base/etc/$i" ] || echo -e "#\tprunable:  /cfg/$i"
+    done
+
+    echo "# Files in cfg that are identical and not needed:"
+    for i in "$@" `find * -type f`;do
+        if [ -e "/conf/base/etc/$i" ] && cmp -s "/conf/base/etc/$i" "$i"; then
+              echo -e "#\tidentical:  /cfg/$i\t(default)"
+        fi
+    done
+}
+
+list() {
+    cd /cfg
+    echo "# Files and directories under /cfg:"
+    for i in "$@" `find * -type f`; do
+	d="   file"
+        [ -e "/conf/base/etc/$i" ] && d="default"
+        echo -e "#\t${d}: /cfg/$i" >> /tmp/list.$$
+    done
+    cat /tmp/list.$$ | sort
+    rm -f /tmp/list.$$
+}
+
+status() {
+    PASSWORD_FILES="passwd\|group\|master.password\|pwd.db\|spwd.db"
+
+    dir_status() {
+        if [ -e "$2" ]; then
+	    echo -e "$1"
+            echo -e "$3"
+	    cat "$2" | while read line; do
+		[ -z "$(echo -e $line | grep -v $PASSWORD_FILES)" ] || echo -e "$line"
+	    done
+	    echo "#"
+        fi
+    }
+
+    # Tracked
+    title="# Tracked: Files already tracked in /cfg that have been altered"
+    advice="#  (use \"cfg sync\" to save all or individually add with \"cfg add <file/dir>\")"
+    out_file="/tmp/unsynced.$$"
+
+    if cfg_not_empty; then
+        cd /cfg
+        for i in "$@" `find * -type f`; do
+            if ! cmp -s "/etc/$i" "$i"; then
+                if [ -e "/conf/base/etc/$i" ]; then
+                    echo -e "#\tmodified:  /etc/$i *default*" >> $out_file
+                else
+                    echo -e "#\tmodified:  /etc/$i" >> $out_file
+                fi
+            fi
+        done
+    fi
+    dir_status "$title" "$out_file" "$advice"
+
+    # Untracked
+    title="# Untracked: Files in /etc that are not currently tracked."
+    advice="#  (use \"cfg add <file/dir>\" to track them)"
+    out_file="/tmp/untracked.$$"
+
+    cd /etc
+    for i in "$@" `find * -type f`;do
+        [ ! -e "/conf/base/etc/$i" -a ! -e "/cfg/$i" ] && \
+	    echo -e "#\tuntracked:  /etc/$i" >> $out_file
+    done
+
+    cd /conf/base/etc
+    for i in "$@" `find * -type f`;do
+        if [ ! -e /cfg/$i ] && ! cmp -s $i /etc/$i; then
+            echo -e "#\tuntracked:  /etc/$i *default*" >> $out_file
+        fi
+    done
+    dir_status "$title" "$out_file" "$advice"
+
+    # Password specific
+    if [ -n "$(cat /tmp/*.$$ | grep $PASSWORD_FILES)" ]; then
+        echo ""
+	echo "# User, group and Password Databases files have changed!"
+	echo "#  (If these are not saved you will loose new users or changes to passwords)"
+	echo "#  (To keep changes run \"cfg password\")"
+        echo ""
+    fi
+
+    rm /tmp/*.$$
+}
+
+backup() {
+	local backup_dest="$1"
+
+	stamp=$(date "+%Y-%m-%d_%H:%M:%S")
+
+	[ -d "$backup_dest" ] || die "Backup dir does not exist"
+
+	cd "/cfg"
+	tar -czf "${backup_dest}/cfg_backup_${stamp}.tar.gz" *
+}
+
+################################################################################
+### Functions that write to cfg and require a remount with rw
+
+trap_and_mount() {
+	trap "mount -o update,ro /cfg" 1 2 15 EXIT
+	mount -o update,rw /cfg
+	(
+	    cd /cfg
+	    $1
+	    cd /
+	)
+	mount -o update,ro /cfg
+	trap 1 2 15 EXIT
+}
+
+remove() {
+    # Alter paths to map /etc -> /cfg and /usr/local/etc -> /cfg/local
+    file=$(echo $1 | sed 's%^/etc/%/cfg/%g;s%^/usr/local/etc/%/cfg/local/%g')
+
+    if [ ! -e "$file" ]; then
+	echo "cfg ${file}: No such file or directory."
+        die "Run \"cfg list\" to see a list of files/directories" 
+    fi 
+    if [ "$1" = "group" \
+         -o "$1" = "master.password" \
+         -o "$1" = "passwd" \
+         -o "$1" = "pwd.db" \
+         -o "$1" = "fake" \
+         -o "$1" = "spwd.db" ];
+    then
+        echo "$file is a protected password file."
+	echo -n "Do you really want to delete it? yes/[no] "
+        read answer
+        [ "$answer" = "yes" ] || die "You chose not to delete $file"
+    fi
+
+    rm -r "$file" || die "$file could not be removed."
+    echo "removed '${file}' from cfg"
+}
+
+sync_cfg() {
+        synced=false
+	if cfg_not_empty; then
+	    for i in "$@" `find * -type f`; do
+	        if ! cmp -s /etc/$i /cfg/$i; then
+                    cp -pf /etc/$i /cfg/$i
+                    echo -e "#\tSynced: '/etc/$i' to /cfg/$i"
+                    synced=true
+                fi
+	    done
+        else
+            echo "There are no files in cfg to sync!"
+	fi
+
+        $synced || echo "No changes to sync!"
+}
+
+save_password() {
+	cp -pfv /etc/passwd /cfg
+	cp -pfv /etc/group /cfg
+	cp -pfv /etc/master.passwd /cfg
+	cp -pfv /etc/pwd.db /cfg
+	cp -pfv /etc/spwd.db /cfg
+}
+
+add() {
+	cd /etc
+	[ -e "$1" ] || die "cfg ${1}: No such file or directory in /etc!"
+
+	relative=$(realpath $1)
+	stip_front_etc=$(echo "$relative" | sed 's/^\/etc\///')
+	dir_name=$(dirname "$stip_front_etc")
+
+	# Get the correct prefix
+	if [ "$dir_name" = "." ]; then
+		prefix=""
+	else
+		prefix="${dir_name}"
+		mkdir -p "/cfg/$prefix"
+	fi
+
+	# Do the copy
+	if [ -f "$relative" ]; then
+		cp -pfv "$relative" "/cfg/$prefix"
+	elif [ -d "$relative" ]; then
+		cp -Rpfv "$relative" "/cfg/$prefix"
+	fi
+}
+
+save_ssh_keys() {
+	mkdir /cfg/ssh
+	cd /etc/ssh
+	cp ssh_host_* /cfg/ssh
+}
+
+################################################################################
+
+whoAmI
+
+case $1 in
+	password)  trap_and_mount save_password;;
+	sync)      trap_and_mount sync_cfg;;
+	add)	   trap_and_mount "add ${2}";;
+	remove)	   trap_and_mount "remove ${2}";;
+	ssh)       trap_and_mount save_ssh_keys;;
+	list)      list;;
+	status)    status;;
+	backup)    backup "${2}";;
+	stale)     stale;;
+	*)         instructions;;
+esac
+
+exit 0
