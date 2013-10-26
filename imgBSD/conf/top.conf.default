@@ -1,0 +1,98 @@
+# Copyright (c) 2013 Ashley Diamond.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+
+PROJECT="imgBSD"
+
+. ${PROJECT}/functions.sh
+. ${PROJECT}/remove_files.sh
+. ${PROJECT}/remove_locales.sh
+
+###################################
+### Version informtion
+###################################
+
+# Version of imgBSD Operating System ontop of Base.
+TOP_VERSION=""
+
+# OPTIONAL:  BUILD_NUM is only implemented if set here.
+# This is incremented after each succesful build. Must not be a string.
+BUILD_NUM=
+
+# Main locale being costructed
+LANGUAGE=""
+
+# Version of ports being used. i.e. 20130908
+PORTS_VERSION=""
+
+###################################
+### Directories and ports
+###################################
+# Directory inwitch to  build the target operating system
+BUILD_DIR=""
+
+# Directory to store final disk image
+IMG_STORE_DIR=""
+
+# Directory to build the disk image in. Having this on an SSD or tmpfs
+# ramdisk can make this process an order of magnitude faster.
+IMG_CONSTRUCT_DIR=""
+
+# Base installation to use for this build, .tar.xz archive
+BASE_BINARY=""
+
+# File containg list of packages to install.
+# Spaces and "#" will be ignored
+PORT_LIST=""
+
+# Directory containing all packages in port list
+PACKAGE_DIR=""
+
+###################################
+### Functions
+###################################
+customize_cmd project_setup
+customize_cmd create_guest_account
+customize_cmd linux_compat
+customize_cmd compress_kernel
+customize_cmd cust_allow_ssh_root
+
+customize_cmd main_remove
+customize_cmd remove_kernel_modules
+customize_cmd remove_include_files
+customize_cmd remove_os_include_files
+customize_cmd remove_dotla_files
+customize_cmd remove_linux
+customize_cmd remove_compiz
+
+#customize_cmd remove_share_locales
+#customize_cmd remove_X11_locales
+#customize_cmd remove_i18n_locales
+customize_cmd remove_linux_locales
+#customize_cmd remove_gconf_locales
+#customize_cmd local_share_locale
+#customize_cmd remove_chromium_locales
+#customize_cmd locale_other
+
+#late_customize_cmd project_late_setup

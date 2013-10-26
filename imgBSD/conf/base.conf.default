@@ -1,0 +1,126 @@
+################################################################################
+
+PROJECT="imgBSD"
+
+################################################################################
+
+BUILD_DIR=/tmp/imgBSD/base
+
+BINARY_STORE_DIR="/media/working/imgBSD/base"
+
+# Source tree directory
+BSD_SRC=${PROJECT}/src9.1
+
+# Parallel Make - how many parallel makes during compilation: rule of thumb: number of cores x2
+MAKE_IN_PARALLEL="make -j8"
+
+# Progress Print level
+PPLEVEL=3
+
+###################################################
+# WORLD OPTIONS
+
+# Options to put in make.conf during buildworld only
+CONF_BUILD=' '
+
+# Options to put in make.conf during installworld only
+CONF_INSTALL=' '
+
+# Kernel config file to use
+KERNEL_CONF="${PROJECT}/conf/kernel_FreeBSD9_amd64"
+
+# Options to put in make.conf during both build- & installworld.
+CONF_WORLD='
+CC=clang
+CXX=clang++
+CPP=clang-cpp
+WITH_CLANG_IS_CC=yes
+WITH_CLANG=true
+WITH_LIBCPLUSPLUS=yes
+NO_WERROR=
+WERROR=
+NO_PFAUTH=YES
+PPP_NO_RADIUS=YES
+####NO_TOOLCHAIN=YES wont compile without it
+WITHOUT_ACCT=true
+#WITHOUT_APM
+WITHOUT_ASSERT_DEBUG=true
+WITHOUT_AT=
+WITHOUT_ATM=true
+WITHOUT_AUDIT=true
+WITHOUT_AUTHPF=true
+WITHOUT_BIND=true
+WITHOUT_BIND_DNSSEC=true
+WITHOUT_BIND_ETC=true
+WITHOUT_BIND_LIBS_LWRES=true
+WITHOUT_BIND_MTREE=true
+WITHOUT_BIND_NAMED=true
+WITHOUT_BIND_UTILS=true
+WITHOUT_BLUETOOTH=true
+WITHOUT_BSNMP=true
+WITHOUT_CALENDAR=true
+WITHOUT_CTM=true
+WITHOUT_CVS=true
+WITHOUT_DICT=true
+WITHOUT_EXAMPLES=true
+WITHOUT_FLOPPY=true
+WITHOUT_FREEBSD_UPDATE=true
+WITHOUT_GAMES=true
+#WITHOUT_GCOV=true
+WITHOUT_GDB=true
+WITHOUT_GPIB=true
+#WITHOUT_GROFF=
+WITHOUT_HTML=true
+#WITHOUT_INFO=
+#WITHOUT_INSTALLLIB=
+WITHOUT_IPFILTER=true
+WITHOUT_IPFW=true
+WITHOUT_IPX=true
+WITHOUT_IPX_SUPPORT=true
+WITHOUT_JAIL=true
+#WITHOUT_KERBEROS=
+#WITHOUT_KERBEROS_SUPPORT=
+WITHOUT_LIB32=
+#WITHOUT_LIBPTHREAD=
+#WITHOUT_LOCALES=
+#WITHOUT_LOCATE=true
+WITHOUT_LPR=true
+WITHOUT_MAIL=
+#WITHOUT_MAN=true
+#WITHOUT_MAN_UTILS=true
+WITHOUT_NCP=true
+WITHOUT_NDIS=true
+WITHOUT_NETCAT=true
+WITHOUT_NETGRAPH=true
+WITHOUT_NETGRAPH_SUPPORT=true
+WITHOUT_NIS=true
+#WITHOUT_NLS=true
+#WITHOUT_NLS_CATALOGS=true
+WITH_PKGNG=YES
+#WITHOUT_NS_CACHING=
+#WITHOUT_PAM=
+#WITHOUT_PAM_SUPPORT=
+#WITHOUT_PKGTOOLS=
+WITHOUT_PORTSNAP=
+WITHOUT_PPP=true
+WITHOUT_QUOTAS=true
+WITHOUT_RCMDS=true
+WITHOUT_RESCUE=true
+WITHOUT_ROUTED=true
+WITHOUT_SENDMAIL=true
+WITHOUT_SHAREDOCS=true
+#WITHOUT_SSP=true
+WITHOUT_SYSINSTALL=true
+WITHOUT_TELNET=true
+#WITHOUT_TOOLCHAIN=
+#WITHOUT_WIRELESS=
+#WITHOUT_WIRELESS_SUPPORT=
+#WITHOUT_WPA_SUPPLICANT_EAPOL=true
+WITHOUT_FORTRAN=true
+WITHOUT_HESIOD=true
+WITHOUT_I4B=true
+WITHOUT_LIBKSE=true
+WITHOUT_PROFILE=true
+PPP_NO_ATM=true
+PPP_NO_I4B=true
+'

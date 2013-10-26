@@ -1,0 +1,4 @@
+[localrules=5]
+add path 'msdosfs/*' mode 0660 group operator
+add path 'da*' mode 0660 group operator
+add path 'usb/*' mode 0660 group operator

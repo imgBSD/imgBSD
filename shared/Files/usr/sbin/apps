@@ -1,0 +1,154 @@
+#!/bin/sh
+#
+# Copyright (c) 2013 Ashley Diamond.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+
+SCRIPT="$(basename $0)"
+
+die() {
+	echo ""
+	echo "$@"
+	echo ""
+	exit 1
+}
+
+filter() {
+	out="$1"
+	out=$(echo "$out" | sed '/^RootInstall/d' )
+	out=$(echo "$out" | sed '/^URL:/d' )
+	out=$(echo "$out" | sed '/^Arch:/d' )
+	out=$(echo "$out" | sed '/^Created:/d' )
+	out=$(echo "$out" | sed '/^Keywords:/d' )
+	out=$(echo "$out" | sed '/^Icon:/d' )
+	out=$(echo "$out" | sed '/^# pbi_add/d' )
+	out=$(echo "$out" | sed '/^To install this PBI:/d' )
+	out=$(echo "$out" | sed '/^Using RepoID:/d' )
+
+	echo "$out"
+}
+
+processApp() {
+	local app="$DELIM
+$1"
+	hasRoot=$(echo "$app" | grep ^'RootInstall: YES'$)
+
+	if [ -z "$hasRoot" ]; then
+		noblanks=$(echo "$app" | sed '/^$/d' )
+		filtered=$(filter "$noblanks")
+		echo "$filtered"
+		echo ""
+	fi
+}
+
+install() {
+	local app="$1"
+	local exists="$(cat /var/db/pbi/index/*-meta | grep "^App=${app};")"
+
+	[ -n "$exists" ] || die "The app you chose, \""$app"\", does not seem to exist!"
+
+	local hasRoot=$(echo "$exists" | tr ';' '\n' | sed '/^$/d' | tail -1 | grep "YES")
+
+	[ -z "$hasRoot" ] || die "The app you chose \""$app"\" cannot currently be installed as this is a read-only OS!"
+	
+	if pbi_add --rArch amd64 --repo 001 -r "$app" ; then
+		echo "Congratulations "$app" was installed correctly"
+	else
+		echo "Sorry, there was a problem installing your app"
+	fi
+}
+
+installed() {
+	local all_apps="$(pbi_info)"
+	[ -n "${all_apps:-}" ] || die "There are no apps installed"
+
+	echo "# The following is a list of all installed apps:"
+	echo "$all_apps"
+}
+
+search() {
+	DELIM="------------------------------------"
+	PBI_SEARCH="/usr/local/sbin/pbi_browser -s"
+	first_delim=true
+	app=""
+	local query="$1"
+
+mkdir /tmp/$(basename $0).$$
+cd /tmp/$(basename $0).$$
+
+	pbi_browser -s "$query" | while read line; do
+	if [ "$line" = "$DELIM" ]; then
+		if $first_delim ; then
+			first_delim=false
+		else
+			processApp "$app"
+			app=""
+		fi
+	else
+		app="$app
+$line"
+	fi
+done
+
+echo "# To install any app run: $SCRIPT -i \"Application\""
+rm -r /tmp/$(basename $0).$$
+}
+
+delete() {
+	local app="$1"
+
+	isInstalled="$(pbi_info | grep "$apps")"
+
+	if [ -z "${isInstalled:-}" ]; then
+		echo "The app \""$app"\" is not installed!"
+		echo "Run \"$SCRIPT installed\" to get a list of all installed apps"
+		exit 1
+	fi	
+
+	if pbi_delete "$app" ; then
+		echo "Your app was succesfully deleted!"
+	else
+		die "Sorry, your app could not be deleted"
+	fi
+}
+
+instructions() {
+	echo "  $SCRIPT OPTION <value>"
+	echo ""
+	echo "  install <app>      installs provided app"
+	echo "  installed          displays all installed apps"
+	echo "  search <phrase>    search all apps for phrase"
+	echo "  delete <app>       deletes the given app"
+	echo "  help               show this dialog"
+}
+
+case $1 in
+	install)   install "${2}";;
+	installed) installed;;
+	search)	   search "${2}";;
+	delete)	   delete "${2}";;
+	list)      list;;
+	*)         instructions;;
+esac
+

@@ -1,0 +1,18 @@
+whoAmI() {
+	[ "$(whoami)" = "root" ] || (echo "You must be root"; exit 1)
+}
+
+die() {
+	echo "$@"
+	exit 1
+}
+
+timer() {
+	if [ "$1" = "start" ]; then
+		T="$(date +%s)"
+	elif [ "$1" = "stop" ]; then
+		T="$(($(date +%s)-T))"
+		printf "Took: %02dh %02dm %02ds\n" "$((T/3600%24))" \
+		    "$((T/60%60))" "$((T%60))"""
+	fi
+}

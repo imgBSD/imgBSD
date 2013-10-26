@@ -1,0 +1,9 @@
+# $FreeBSD: src/share/skel/dot.rhosts,v 1.6.62.1 2011/09/23 00:51:37 kensmith Exp $
+#
+# .rhosts - trusted remote host name and user data base
+#
+# see hosts.equiv(5), rsh(1), rlogin(1), rcp(1)
+#
+# This file should NOT be group or other readable.
+# OtherMachine
+# OtherMachine myFriend

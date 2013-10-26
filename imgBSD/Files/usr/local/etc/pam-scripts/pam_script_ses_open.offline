@@ -1,0 +1,123 @@
+#!/bin/sh
+#
+# Copyright (c) 2013 Ashley Diamond.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+
+set -e
+
+USER="$PAM_USER"
+GROUP=`id -gn $USER`
+HOME_DIR="/home/${USER}"
+NFS_OPTIONS="nfsv4,rw,intr,nolockd,sec=krb5i"
+NFS_SERV="turing.idleleap.co.uk"
+HOME_DIR_OFFLINE="/home/${USER}_offline"
+
+mkdir -p /tmp/home
+
+if [ ! "${USER}" = "root" ]; then
+	setup_dirs() {
+		/bin/rm -fr $HOME_DIR
+		/bin/rm -fr $HOME_DIR_OFFLINE
+		/bin/mkdir -p $HOME_DIR $HOME_DIR_OFFLINE
+		/usr/sbin/chown ${USER}:${GROUP} $HOME_DIR $HOME_DIR_OFFLINE
+	}
+
+	mount_nfs() {
+		mounted() {
+			MOUNTED=`/sbin/mount | /usr/bin/grep -w nfs | /usr/bin/awk '{print $3}'`	
+			if [ "${MOUNTED}" = "${HOME_DIR}" ]; then
+				echo "TRUE"
+			fi
+		}
+
+		/sbin/umount -f $HOME_DIR || true
+		/usr/bin/su $USER -c "/sbin/mount -t nfs -o $NFS_OPTIONS ${NFS_SERV}:/$USER $HOME_DIR" >> /dev/null 1>&2
+
+		if [ "mounted" = "TRUE" ]; then
+			/bin/echo -n "NFS Filesystem Mounted!"; echo ""
+		fi
+	}
+
+	create_dirs() {
+		DIRECTORIES='
+			Documents
+			Downloads
+			Videos
+			Music
+			Pictures
+		'
+
+		for dir in $DIRECTORIES; do
+			if [ ! -d ${HOME_DIR}/$dir ]; then
+				mkdir ${HOME_DIR}/$dir
+				/usr/sbin/chown -R ${USER}:${GROUP} ${HOME_DIR}/$dir
+			fi
+		done
+	}
+
+	create_offline_dirs() {
+		DIRCTORIES='
+
+		'
+
+		for dir in $DIRECTORIES; do
+                        if [ ! -d ${HOME_DIR_OFFLINE}/$dir ]; then
+                                mkdir ${HOME_DIR_OFFLINE}/$dir
+                                /usr/sbin/chown -R ${USER}:${GROUP} ${HOME_DIR_OFFLINE}
+                        fi
+                done
+
+	}
+
+	move_files() {
+		cp -fR /usr/homeskel/.[a-zA-Z0-9]* $HOME_DIR
+		/usr/sbin/chown -R ${USER}:${GROUP} ${HOME_DIR_OFFLINE}
+		mkdir -p ${HOME_DIR_OFFLINE}/.runtime
+		/bin/chmod 0700 ${HOME_DIR_OFFLINE}/.runtime
+	}
+
+	echo -n "Setting up files... "
+	setup_dirs; echo "done"
+	echo -n "Mounting NFS... "
+	mount_nfs; echo "done"
+	#echo -n "Copying files... "
+	#copy_files; echo "done"
+	#echo -n "Checking dirs... "
+	create_dirs; echo "done"
+	#/usr/sbin/chown -R ${USER}:${GROUP} ${HOME_DIR}
+	# Allow users to mount in gnome
+	if [ -e /usr/local/etc/PolicyKit/PolicyKit.conf.default ]; then
+        	cp /usr/local/etc/PolicyKit/PolicyKit.conf.default /usr/local/etc/PolicyKit/PolicyKit.conf
+        	sed -i e 's|NEWUSER|'${USER}'|' /usr/local/etc/PolicyKit/PolicyKit.conf
+	fi
+	echo -n "moving files..."
+	move_files
+	echo "done"
+
+	/usr/sbin/pw group mod operator -m $USER
+	/usr/sbin/pw group mod wheel -m $USER
+fi
+
+exit 0
