@@ -126,11 +126,9 @@ delete() {
 		exit 1
 	fi	
 
-	if pbi_delete "$app" ; then
-		echo "Your app was succesfully deleted!"
-	else
-		die "Sorry, your app could not be deleted"
-	fi
+	pbi_delete "$app" || die "Sorry, your app \"$app\" could not be deleted"
+
+	echo "Your app was succesfully deleted!"
 }
 
 instructions() {
