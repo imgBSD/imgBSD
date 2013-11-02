@@ -55,3 +55,4 @@ sysutils/fusefs-s3fs
 #emulators/virtualbox-ose-additions
 sysutils/wait_on
 sysutils/qjail
+x11/xbacklight
