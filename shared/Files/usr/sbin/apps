@@ -64,19 +64,22 @@ $1"
 
 install() {
 	local app="$1"
-	local exists="$(cat /var/db/pbi/index/*-meta | grep "^App=${app};")"
 
+	# Make sure it's not already installed
+	isInstalled=$(installed | grep -i "$app")
+	[ -n "$isInstalled" ] && die "App \"$app\" is already installed"
+
+	# Check it is a valid PBI
+	local exists="$(cat /var/db/pbi/index/*-meta | grep "^App=${app};")"
 	[ -n "$exists" ] || die "The app you chose, \""$app"\", does not seem to exist!"
 
+	# Ignore if it requires a root install
 	local hasRoot=$(echo "$exists" | tr ';' '\n' | sed '/^$/d' | tail -1 | grep "YES")
-
 	[ -z "$hasRoot" ] || die "The app you chose \""$app"\" cannot currently be installed as this is a read-only OS!"
 	
-	if pbi_add --rArch amd64 --repo 001 -r "$app" ; then
-		echo "Congratulations "$app" was installed correctly"
-	else
-		echo "Sorry, there was a problem installing your app"
-	fi
+	pbi_add --rArch amd64 --repo 001 -r "$app" || die "Error installing application: $app"
+
+	echo "Congratulations "$app" was installed"
 }
 
 installed() {
