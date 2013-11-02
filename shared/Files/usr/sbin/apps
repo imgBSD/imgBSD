@@ -52,6 +52,7 @@ filter() {
 processApp() {
 	local app="$DELIM
 $1"
+
 	hasRoot=$(echo "$app" | grep ^'RootInstall: YES'$)
 
 	if [ -z "$hasRoot" ]; then
@@ -147,12 +148,14 @@ instructions() {
 	echo "  help               show this dialog"
 }
 
+[ "$(whoami)" = "root" ] && die "You should run this script as root!"
+
 case $1 in
 	install)   install "${2}";;
 	installed) installed;;
 	search)	   search "${2}";;
 	delete)	   delete "${2}";;
-	list)      list;;
 	*)         instructions;;
 esac
 
+exit 0
