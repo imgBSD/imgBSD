@@ -37,7 +37,7 @@ www/chromium
 x11-drivers/xf86-video-intel
 net/rsync
 sysutils/rdiff-backup
-ports-mgmt/pbi-manager
+sysutils/pcbsd-utils
 sysutils/acpi_call
 net-mgmt/wifimgr
 multimedia/vlc
