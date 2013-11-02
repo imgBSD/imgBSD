@@ -91,31 +91,34 @@ installed() {
 }
 
 search() {
+	local query="$1"
 	DELIM="------------------------------------"
 	PBI_SEARCH="/usr/local/sbin/pbi_browser -s"
 	first_delim=true
 	app=""
-	local query="$1"
 
-mkdir /tmp/$(basename $0).$$
-cd /tmp/$(basename $0).$$
+	mkdir /tmp/$(basename $0).$$
+	cd /tmp/$(basename $0).$$
+
+	echo "Searching for apps with key: $query"
 
 	pbi_browser -s "$query" | while read line; do
-	if [ "$line" = "$DELIM" ]; then
-		if $first_delim ; then
-			first_delim=false
+		if [ "$line" = "$DELIM" ]; then
+			if $first_delim ; then
+				first_delim=false
+			else
+				processApp "$app"
+				app=""
+			fi
 		else
-			processApp "$app"
-			app=""
-		fi
-	else
-		app="$app
+# This must be left here for correct formatting
+app="$app
 $line"
-	fi
-done
+		fi
+	done
 
-echo "# To install any app run: $SCRIPT -i \"Application\""
-rm -r /tmp/$(basename $0).$$
+	echo "# To install any app run: $SCRIPT install \"Application\""
+	rm -r /tmp/$(basename $0).$$
 }
 
 delete() {
