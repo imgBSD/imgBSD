@@ -95,7 +95,7 @@ main_remove() {
 	usr/local/bin/mysqlimport
 	usr/local/bin/mysqladmin
 
-	boot/pxeboot
+	#boot/pxeboot
 
 	#usr/local/share/compiz/reflection.png
 	usr/local/sbin/pkg-static
@@ -110,7 +110,6 @@ main_remove() {
 	usr/local/share/doc
 	usr/local/share/examples
 	usr/local/lib/python2*/test
-	#usr/local/share/gnome/help
 	usr/local/lib/libffi-*/include
 
 	usr/local/share/licenses
@@ -132,6 +131,9 @@ main_remove() {
 	go_remove "usr/local" "$FOLDERS"
 }
 
+# Most of these modules are build into the kernel and
+# only wast space by also being kernel modules in the
+# image.
 remove_kernel_modules() {
 
 MODULES_TO_REMOVE='
@@ -147,7 +149,6 @@ accf_data.ko
 accf_dns.ko
 accf_http.ko
 agp.ko
-
 amr.ko 
 amr_cam.ko 
 amr_linux.ko 
