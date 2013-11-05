@@ -1,28 +1,3 @@
-# Copyright (c) 2013 Ashley Diamond.
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-# SUCH DAMAGE.
-#
-
 PROJECT="imgBSD"
 
 . ${PROJECT}/functions.sh
@@ -30,41 +5,38 @@ PROJECT="imgBSD"
 . ${PROJECT}/remove_locales.sh
 
 ###################################
-### Version informtion
+### Version information
 ###################################
 
-# Version of imgBSD Operating System ontop of Base.
-TOP_VERSION=""
-
 # OPTIONAL:  BUILD_NUM is only implemented if set here.
-# This is incremented after each succesful build. Must not be a string.
+# This is incremented after each successful build. Must not be a string.
 BUILD_NUM=
 
-# Main locale being costructed
-LANGUAGE=""
+# Extra Description to identify this build. i.e. main supported language
+EXTRA_DESC=""
 
 # Version of ports being used. i.e. 20130908
-PORTS_VERSION=""
+PORTS_VERSION=
 
 ###################################
 ### Directories and ports
 ###################################
-# Directory inwitch to  build the target operating system
-BUILD_DIR=""
+# Directory in witch to build the target operating system
+BUILD_DIR=
 
 # Directory to store final disk image
-IMG_STORE_DIR=""
+IMG_STORE_DIR=
 
 # Directory to build the disk image in. Having this on an SSD or tmpfs
 # ramdisk can make this process an order of magnitude faster.
-IMG_CONSTRUCT_DIR=""
+IMG_CONSTRUCT_DIR=
 
 # Base installation to use for this build, .tar.xz archive
-BASE_BINARY=""
+BASE_BINARY=
 
-# File containg list of packages to install.
+# File containing list of packages to install.
 # Spaces and "#" will be ignored
-PORT_LIST=""
+PORT_LIST="${PROJECT}/conf/ports"
 
 # Directory containing all packages in port list
 PACKAGE_DIR=""

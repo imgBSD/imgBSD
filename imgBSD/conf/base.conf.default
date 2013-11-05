@@ -4,12 +4,18 @@ PROJECT="imgBSD"
 
 ################################################################################
 
+BASE_VERSION=1.0
+BSD_VERSION=9.2
+BSD_SVN=257205
+
+# Directory to build sources (kernel + world) in
 BUILD_DIR=/tmp/imgBSD/base
 
-BINARY_STORE_DIR="/media/working/imgBSD/base"
+# Direcotry to store the final completed base archive
+BINARY_STORE_DIR=/imgBSD/base
 
 # Source tree directory
-BSD_SRC=${PROJECT}/src9.1
+BSD_SRC=/sources/FreeBSD_src-9.2
 
 # Parallel Make - how many parallel makes during compilation: rule of thumb: number of cores x2
 MAKE_IN_PARALLEL="make -j8"
@@ -27,7 +33,7 @@ CONF_BUILD=' '
 CONF_INSTALL=' '
 
 # Kernel config file to use
-KERNEL_CONF="${PROJECT}/conf/kernel_FreeBSD9_amd64"
+KERNEL_CONF="kernel_FreeBSD9.2_amd64"
 
 # Options to put in make.conf during both build- & installworld.
 CONF_WORLD='
