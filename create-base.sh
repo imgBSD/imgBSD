@@ -165,7 +165,7 @@ release_info ( ) {
 	echo "BASE_BUILD_DATE=$(date +%Y%m%d)" >> $release_file
 	echo "BASE_PROJECT=$(cat "$CONF_FILE" | grep ^"PROJECT=")"
 	cat "$CONF_FILE" |
-		grep -w '^BASE_VERSION\|^BASE_BSD\|^BASE_SVN' \
+		grep -w '^BASE_VERSION\|^BSD_VERSION\|^BSD_SVN' \
 		>> $release_file
 
 	) > ${TARGET_DIR}/logs/release_info 2>&1
@@ -241,7 +241,7 @@ PROJECT_DIR="$(dirname $(dirname $CONF_FILE))"
 [ -n ${ARCH:-} ] || ARCH=`uname -p`
 set -e
 
-TARGET_NAME=${PROJECT}_base-${BASE_VERSION}_${BSD_VERSION}_${ARCH}
+TARGET_NAME=${PROJECT}_base_${BSD_VERSION}_${BASE_VERSION}_${ARCH}
 TARGET_DIR=${BUILD_DIR}/${TARGET_NAME}
 
 WORLDDIR=${TARGET_DIR}/_.w
