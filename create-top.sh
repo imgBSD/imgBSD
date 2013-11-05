@@ -304,11 +304,15 @@ release_info ( ) {
 
 	echo "BUILD_TIME=$(date +%H:%M)" >> $release_file
 	echo "BUILD_DATE=$(date +%Y%m%d)" >> $release_file
+	echo "BUILD_VERSION=$BUILD_VERSION" >> $release_file
 	echo "OS_SIZE=$(du -sm $WORLDDIR | awk '{print $1}')MB" >> $release_file
+
+	# get contents of conf file
 	cat "$CONF_FILE" |
-		grep -w '^PORTS_VERSION\|^LANGUAGE\|^BUILD_NUM\|^TOP_VERSION' | \
+		grep -w '^PORTS_VERSION\|^EXTRA_DESC\|^BUILD_NUM' | \
 		sed 's/"//g' >> $release_file
 
+	# Get git sha if available
 	if [ -f .git/refs/heads/master ]; then
 		sha1=$(cat .git/refs/heads/master)
 		echo "GIT_REVISION=$sha1" >> $release_file
@@ -496,15 +500,20 @@ CONF_FILE=$(realpath "$CONF_FILE")
 [ -e "$BASE_BINARY" ] || mkdir -p "$BASE_BINARY"
 [ -d "$IMG_STORE_DIR" ] || mkdir -p "$IMG_STORE_DIR"
 [ -d "$IMG_CONSTRUCT_DIR" ] || mkdir -p "$IMG_CONSTRUCT_DIR"
-
-[ -z "$BUILD_NUM" ] || ADD_BUILD_NUM="_$BUILD_NUM"
-
-# Get the base version from compressed archive
-BASE_VERSION=$(tar -xJqOf $BASE_BINARY _.w/RELEASE.txt | grep ^"BASE_VERSION=" | awk -F'=' '{print $NF}')
-
-TARGET=${PROJECT}_${LANGUAGE:-all}_b${BASE_VERSION:-0.0}_t${TOP_VERSION:-0.0}${ADD_BUILD_NUM:-}
 set -e
 
+# If the user has given a BUILD_NUM process it
+[ -z "$BUILD_NUM" ] || ADD_BUILD_NUM="_$BUILD_NUM"
+
+# Get the base info from compressed archive
+base_info=$(tar -xJqOf $BASE_BINARY _.w/RELEASE.txt)
+BASE_VERSION=$(echo "$base_info" | grep ^"BASE_VERSION=" | awk -F'=' '{print $NF}')
+BSD_VERSION=$(echo "$base_info" | grep ^"BSD_VERSION=" | awk -F'=' '{print $NF}')
+
+# Get Current date for BUILD_VERSION
+BUILD_VERSION=$(date '+%Y%m%d')
+
+TARGET=${PROJECT}_${EXTRA_DESC:-GENERIC}_b${BSD_VERSION}-${BASE_VERSION:-0.0}_${BUILD_VERSION}${ADD_BUILD_NUM:-}
 TARGET_DIR="${BUILD_DIR}/${TARGET}"
 WORLDDIR=${TARGET_DIR}/_.w
 
