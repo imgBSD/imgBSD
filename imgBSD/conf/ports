@@ -56,3 +56,4 @@ sysutils/fusefs-s3fs
 sysutils/wait_on
 sysutils/qjail
 x11/xbacklight
+deskutils/gucharmap
