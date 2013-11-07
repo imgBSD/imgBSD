@@ -37,11 +37,9 @@ if [ "$USER" = "$GUEST" ]; then
 fi
 
 if [ -e "${HOME}/.first_login" ]; then
-	nspluginwrapper -v -a -i
 	rm -f "${HOME}/.first_login"
-else
-	nspluginwrapper -v -a -u
 fi
-	
+
+su -m $USER -c '(nspluginwrapper -v -a -u) &'
 
 exit 0
