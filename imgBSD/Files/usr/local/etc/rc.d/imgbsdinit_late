@@ -51,6 +51,9 @@ imgbsdinit_start() {
 
 	# Change Xorg priority
 	( sleep 5; rtprio 31 -`pgrep Xorg` > /dev/null 2>&1) &
+
+	# Save gdm directory after boot
+	( sleep 120; cfg add /etc/local/gdm/home ) &
 }
 
 imgbsdinit_stop() {
