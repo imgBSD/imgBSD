@@ -215,7 +215,13 @@ sync_cfg() {
         synced=false
 	if cfg_not_empty; then
 	    for i in "$@" `find * -type f`; do
-	        if ! cmp -s /etc/$i /cfg/$i; then
+                [ -n "$i" ] || continue
+                # Remove files if they are only in /cfg
+                if [ ! -e "/etc/$i" ]; then
+                    rm -rf "/cfg/$i"
+                    continue
+                fi
+                if ! cmp -s /etc/$i /cfg/$i; then
                     cp -pf /etc/$i /cfg/$i
                     echo -e "#\tSynced: '/etc/$i' to /cfg/$i"
                     synced=true
