@@ -222,7 +222,7 @@ sync_cfg() {
                     continue
                 fi
                 if ! cmp -s /etc/$i /cfg/$i; then
-                    cp -pf /etc/$i /cfg/$i
+                    $COPY_CMD /etc/$i /cfg/$i
                     echo -e "#\tSynced: '/etc/$i' to /cfg/$i"
                     synced=true
                 fi
@@ -235,11 +235,11 @@ sync_cfg() {
 }
 
 save_password() {
-	cp -pfv /etc/passwd /cfg
-	cp -pfv /etc/group /cfg
-	cp -pfv /etc/master.passwd /cfg
-	cp -pfv /etc/pwd.db /cfg
-	cp -pfv /etc/spwd.db /cfg
+	$COPY_CMD /etc/passwd /cfg
+	$COPY_CMD /etc/group /cfg
+	$COPY_CMD /etc/master.passwd /cfg
+	$COPY_CMD /etc/pwd.db /cfg
+	$COPY_CMD /etc/spwd.db /cfg
 }
 
 add() {
@@ -259,22 +259,25 @@ add() {
 	fi
 
 	# Do the copy
-	if [ -f "$relative" ]; then
-		cp -pfv "$relative" "/cfg/$prefix"
-	elif [ -d "$relative" ]; then
-		cp -Rpfv "$relative" "/cfg/$prefix"
-	fi
+	$COPY_CMD "$relative" "/cfg/$prefix"
 }
 
 save_ssh_keys() {
 	mkdir /cfg/ssh
 	cd /etc/ssh
-	cp ssh_host_* /cfg/ssh
+	$COPY_CMD ssh_host_* /cfg/ssh
 }
 
 ################################################################################
 
 whoAmI
+
+# if rsync
+if which -s rsync ; then
+        COPY_CMD="rsync -aqmr --delete-during"
+else
+	COPY_CMD="cp -Rpfv"
+fi
 
 case $1 in
 	password)  trap_and_mount save_password;;
