@@ -38,10 +38,6 @@ SCRIPT_DIR=$(pwd)
 # 20480 = 10MB
 RAMDISK_ETCSIZE=20480
 
-# Size of the /tmp+/var ramdisk in 512 bytes sectors (usefull for log files).
-# 102400 = 50MB
-RAMDISK_VARSIZE=102400
-
 DISK_LABEL=imgBSD
 
 # Media geometry, only relevant if bios doesn't understand LBA.
@@ -136,7 +132,9 @@ setup_imgBSD() (
         done
 
         echo "$RAMDISK_ETCSIZE" > conf/base/etc/md_size
-        echo "$RAMDISK_VARSIZE" > conf/base/var/md_size
+
+	# put marker so that rc.initdiskless creates a tmpfs fs for /var
+	touch conf/base/var/tmpfs
 
         # pick up config files from the special partition
         echo "mount -o ro /dev/ufs/SurviveBoot" > conf/default/etc/remount
