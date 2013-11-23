@@ -74,6 +74,21 @@ run_customize() (
 	done
 )
 
+run_release() (
+        pprint 2 "run release scripts"
+	if [ -n "${RELEASE_FUNCTIONS:-}" ]; then
+		for c in $RELEASE_FUNCTIONS
+		do
+		        pprint 2 "release function \"$c\""
+		        pprint 3 "log: ${TARGET_DIR}/logs/release.$c"
+		        pprint 4 "`type $c`"
+		        ( set -x ; $c ) > ${TARGET_DIR}/logs/release.$c 2>&1
+		done
+	else
+		pprint 3 "There were no release functions"
+	fi
+)
+
 run_late_customize() (
 	pprint 2 "run late customize scripts"
 	if [ -n "${LATE_CUSTOM_FUNCTIONS:-}" ]; then
@@ -369,6 +384,15 @@ late_customize_cmd () {
 }
 
 #######################################################################
+# Convenience function:
+#       Register all args as release function to run before
+#       exiting script.
+
+release_cmd () {
+        RELEASE_FUNCTIONS="${RELEASE_FUNCTIONS:-} $*"
+}
+
+#######################################################################
 # Allow root login via ssh
 
 cust_allow_ssh_root () (
@@ -388,6 +412,9 @@ last_orders() {
 
 	# Let all users remove the target dir
 	chmod 777 ${TARGET_DIR}*
+
+	# Run release functions if this is a release build
+	run_release
 }
 
 increment_build_num() {
@@ -418,6 +445,7 @@ compress_kernel() {
 # Progress Print
 #	Print $2 at level $1.
 pprint() {
+    $release_build && return 0
     if [ "$1" -le $PPLEVEL ]; then
 	runtime=$(( `date +%s` - $BUILD_STARTTIME ))
 	printf "%s %.${1}s %s\n" "`date -u -r $runtime +%H:%M:%S`" "#####" "$2" 1>&3
@@ -440,9 +468,10 @@ usage () {
 	echo "  -A	Archive specified target dir to .tar.xz only"
 	echo ""
 	echo "Other:"
-	echo "  -q	make output more quiet"
-	echo "  -v	make output more verbose"
-	echo "  -p	specify dir containing the projects conf files (default is relative to conf file)."
+	echo "  -q	Make output more quiet"
+	echo "  -v	Make output more verbose"
+	echo "  -r      Release Build output - only print image name and path during build"
+	echo "  -p	Specify dir containing the projects conf files (default is relative to conf file)."
 	echo "    	Usefull when using a conf file not in the same directory as the project files"
 	) 1>&2
 	exit 2
@@ -455,6 +484,7 @@ diskimg_only=false
 archive_only=false
 do_archive=false
 skip_img_build=false
+release_build=false
 
 if [ $# -eq 0 ] ; then
 	echo "You gave no arguments"
@@ -462,7 +492,7 @@ if [ $# -eq 0 ] ; then
 fi
 
 set +e
-args=`getopt c:p:A:D:asqv $*`
+args=`getopt c:p:A:D:asqrhv $*`
 [ $? -ne 0 ] && usage
 set -e
 
@@ -477,6 +507,7 @@ do
 	-A) archive_only=true; export ARCHIVE_IN="$2";  shift; shift;;
 	-s) skip_img_build=true; shift;;
 	-p) export PROJ_DIR_IN="$2"; shift; shift;;
+	-r) export release_build=true; shift;;
 	-h) usage;;
 	-q) PPLEVEL=$(($PPLEVEL - 1)); shift;;
 	-v) PPLEVEL=$(($PPLEVEL + 1)); shift;;
@@ -591,10 +622,12 @@ else
 	compress_image
 fi
 
+# Does the user want to archive the target dir
 $do_archive && create_archive "$TARGET_DIR" "$BUILD_DIR" "$IMG_STORE_DIR" "$TARGET"
 
 last_orders
 
-pprint 1 "$PROJECT image completed"
+pprint 1 "$PROJECT image completed successfully"
+
 
 exit 0
