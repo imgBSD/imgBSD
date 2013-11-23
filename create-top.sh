@@ -238,16 +238,16 @@ required_size ( ) {
 
 	if [ $MAX_OS_SIZE -lt $required_space ]; then
 		echo "OS too large! Allowed size: $MAX_OS_SIZE was $required_space" \
-			>> ${TARGET_DIR}/logs/create_diskimage
+			>> ${TARGET_DIR}/logs/create_image
 		exit 1
 	fi
 
 	echo $(( $required_space * 1000 * 1000 / 512 ))
 }
 
-create_diskimage ( ) (
-	pprint 2 "build diskimage"
-	pprint 3 "log: ${TARGET_DIR}/logs/create_diskimage"
+create_image ( ) (
+	pprint 2 "create image"
+	pprint 3 "log: ${TARGET_DIR}/logs/create_image"
 
 	(
 	IMG_SIZE=$(required_size)
@@ -281,7 +281,7 @@ create_diskimage ( ) (
 
 	rm -rf ${MNT}
 
-	) > ${TARGET_DIR}/logs/create_diskimage 2>&1
+	) > ${TARGET_DIR}/logs/create_image 2>&1
 )
 
 create_binary ( ) (
@@ -560,7 +560,7 @@ if $diskimg_only; then
 	TARGET=$(basename "$TARGET_DIR_IN")
 	WORLDDIR=${TARGET_DIR}/_.w
 	pprint 1 "$TARGET image build starting"
-	create_diskimage
+	create_image
 	create_binary
 	pprint 1 "$TARGET image build completed"
 	exit 0
@@ -587,7 +587,7 @@ if $skip_img_build; then
 	pprint 2 "Skipping creating the image file"
 else
 	pprint 2 "Creating image file"
-	create_diskimage
+	create_image
 	create_binary
 fi
 
