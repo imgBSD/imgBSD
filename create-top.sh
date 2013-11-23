@@ -284,9 +284,9 @@ create_image ( ) (
 	) > ${TARGET_DIR}/logs/create_image 2>&1
 )
 
-create_binary ( ) (
-	pprint 2 "create binary"
-	pprint 3 "log: ${TARGET_DIR}/logs/create_binary"
+compress_image ( ) (
+	pprint 2 "compress image"
+	pprint 3 "log: ${TARGET_DIR}/logs/compress_image"
 
 	(
 	cd ${IMG_CONSTRUCT_DIR}
@@ -306,7 +306,7 @@ create_binary ( ) (
 	# Let all users remove the image
 	chmod 777 $IMG_STORE_DIR/${TARGET}*
 
-	) > ${TARGET_DIR}/logs/create_binary 2>&1
+	) > ${TARGET_DIR}/logs/compress_image 2>&1
 
 	pprint 3 "Image created: ${IMG_STORE_DIR}/${TARGET}.img.xz"
 )
@@ -561,7 +561,7 @@ if $diskimg_only; then
 	WORLDDIR=${TARGET_DIR}/_.w
 	pprint 1 "$TARGET image build starting"
 	create_image
-	create_binary
+	compress_image
 	pprint 1 "$TARGET image build completed"
 	exit 0
 elif $archive_only; then
@@ -588,7 +588,7 @@ if $skip_img_build; then
 else
 	pprint 2 "Creating image file"
 	create_image
-	create_binary
+	compress_image
 fi
 
 $do_archive && create_archive "$TARGET_DIR" "$BUILD_DIR" "$IMG_STORE_DIR" "$TARGET"
