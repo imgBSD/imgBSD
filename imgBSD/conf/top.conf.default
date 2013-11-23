@@ -19,6 +19,25 @@ EXTRA_DESC=""
 PORTS_VERSION=
 
 ###################################
+### OS / image configuration
+###################################
+# Size of the /etc ramdisk in 512 bytes sectors.
+RAMDISK_ETCSIZE=20480
+
+# Used when labelling partitions (use with care)
+DISK_LABEL=imgBSD
+
+# Media geometry, only relevant if bios doesn't understand LBA.
+DISK_SECTS=63
+DISK_HEADS=255
+
+# Max size of OS that is allowed in MB.
+MAX_OS_SIZE=2000
+
+# Newfs parameters to use when creating the image
+NEWFS="-b 4096 -f 512 -i 8192 -O2 -o time"
+
+###################################
 ### Directories and ports
 ###################################
 # Directory in witch to build the target operating system

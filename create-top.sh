@@ -34,22 +34,6 @@ set -u
 
 SCRIPT_DIR=$(pwd)
 
-# Size of the /etc ramdisk in 512 bytes sectors.
-# 20480 = 10MB
-RAMDISK_ETCSIZE=20480
-
-DISK_LABEL=imgBSD
-
-# Media geometry, only relevant if bios doesn't understand LBA.
-DISK_SECTS=63
-DISK_HEADS=255
-
-# Max size of OS that is allowed in MB.
-MAX_OS_SIZE=2000
-
-# Newfs parameters to use
-NEWFS="-b 4096 -f 512 -i 8192 -O2 -o time"
-
 # Progress Print level
 PPLEVEL=3
 
@@ -518,13 +502,21 @@ fi
 #######################################################################
 # Setup and Export Internal variables
 
+##############################
+#### Variable Checks
 set +e
-
 [ -n "$CONF_FILE" ] || die "You have provided a configuration file (-c)"
 [ -f "$CONF_FILE" ] || die "You have not given a configuration file"
 
 # This script should be run as root, or with sudo
 [ "$(whoami)" = "root" ] || die "You are not root"
+
+[ -n "$RAMDISK_ETCSIZE" ] || die "RAMDISK_ETCSIZE variable is not set"
+[ -n "$DISK_LABEL" ] || die "DISK_LABEL variable is not set"
+[ -n "$DISK_SECTS" ] || die "DISK_SECTS variable is not set"
+[ -n "$DISK_HEADS" ] || die "DISK_HEADS variable is not set"
+[ -n "$MAX_OS_SIZE" ] || die "MAX_OS_SIZ variable is not set"
+[ -n "$NEWFS" ] || die "NEWFS variable is not set"
 
 # Does the user want the project directory separate from the conf file directory
 if [ -n "${PROJ_DIR_IN:-}" ]; then
@@ -541,6 +533,7 @@ CONF_FILE=$(realpath "$CONF_FILE")
 [ -d "$IMG_STORE_DIR" ] || mkdir -p "$IMG_STORE_DIR"
 [ -d "$IMG_CONSTRUCT_DIR" ] || mkdir -p "$IMG_CONSTRUCT_DIR"
 set -e
+##############################
 
 # If the user has given a BUILD_NUM process it
 $release_build && unset BUILD_NUM
