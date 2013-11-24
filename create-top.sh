@@ -391,8 +391,8 @@ last_orders() {
 }
 
 increment_build_num() {
-	NUM=$(sed -n "s/^BUILD_NUM\=\(.*\)/\1/p" ${CONF_FILE})
-	[ -n "NUM" ] || return 0
+	NUM=$(sed -n "s/^BUILD_NUM\=\(.*\)/\1/p" ${CONF_FILE} | sed 's/"//g')
+	[ -n "$NUM" ] || return 0
 	NUM=$(echo $NUM | sed 's/0*//')
 	NUM=$(($NUM+1))
 
