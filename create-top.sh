@@ -148,21 +148,36 @@ install_packages ( ) (
 	pprint 3 "log: ${TARGET_DIR}/logs/install_packages"
 
 	(
-	cp -r ${PACKAGE_DIR} ${WORLDDIR}/packages
+	mkdir ${WORLDDIR}/packages
+	mkdir -p ${WORLDDIR}/usr/local/etc
+	mkdir -p ${WORLDDIR}/var/cache/pkg/All
+
+	trap "echo 'Running exit trap code' ; umount -f ${PACKAGE_DIR} ; umount -f ${PACKAGE_DIR}/All" 1 2 15 EXIT
+
+	mount_nullfs -o ro ${PACKAGE_DIR} ${WORLDDIR}/packages
+	mount_nullfs -o ro ${PACKAGE_DIR}/All ${WORLDDIR}/var/cache/pkg/All
+
+	echo "packagesite: file:///packages" >> ${WORLDDIR}/usr/local/etc/pkg.conf
+
+	cp /usr/bin/install-info ${WORLDDIR}/usr/bin
 
 	while read line; do
 		[ -z "$line" ] && continue
 		firstChar=`echo $line | cut -c 1`
 	        [ "$firstChar" == "#"  ] && continue
-		package=$(echo $line | awk -F/ '{print "*"$NF"*"}' | tr [0-9-] '*')
-		[ -n "$package" ] && packages="${packages:-} $package"
+		packages="${packages:-} $line"
 	done < ${PORT_LIST}
 
-	echo "$packages" > ${WORLDDIR}/packages/package_list
+	chroot ${WORLDDIR} sh -c "env ASSUME_ALWAYS_YES=1 pkg install $packages > /pkg_install.log"
 
-	chroot ${WORLDDIR} sh -c 'cd packages; env ASSUME_ALWAYS_YES=1 pkg add $(cat package_list)' || true
+	umount -f ${PACKAGE_DIR}
+	umount -f ${PACKAGE_DIR}/All
+        trap - 1 2 15 EXIT
 
-    	rm -rf ${WORLDDIR}/packages
+	# Remove the package repo settings
+	rm ${WORLDDIR}/usr/local/etc/pkg.conf
+	mv ${WORLDDIR}/pkg_install.log  ${TARGET_DIR}/logs
+
 	) > ${TARGET_DIR}/logs/install_packages 2>&1
 )
 
