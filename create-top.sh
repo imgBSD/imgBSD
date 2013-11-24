@@ -323,8 +323,7 @@ release_info ( ) {
 	echo "OS_SIZE=$(du -sm $WORLDDIR | awk '{print $1}')MB" >> $release_file
 
 	# get contents of conf file
-	cat "$CONF_FILE" |
-		grep -w '^PORTS_VERSION\|^EXTRA_DESC\|^BUILD_NUM' | \
+	cat "$CONF_FILE" | grep -w '^PORTS_VERSION\|^EXTRA_DESC\|^BUILD_NUM' | \
 		sed 's/"//g' >> $release_file
 
 	# Get git sha if available
