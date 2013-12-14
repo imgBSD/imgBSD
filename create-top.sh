@@ -597,7 +597,7 @@ elif $archive_only; then
 	exit 0
 fi
 
-pprint 1 "$PROJECT image build starting"
+pprint 1 "image build starting"
 
 setup_base
 setup_etc
