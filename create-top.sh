@@ -74,7 +74,7 @@ run_customize() (
 	done
 )
 
-run_release() (
+run_release_functions() (
         pprint 2 "run release scripts"
 	if [ -n "${RELEASE_FUNCTIONS:-}" ]; then
 		for c in $RELEASE_FUNCTIONS
@@ -404,17 +404,15 @@ cust_allow_ssh_root () (
 # Commands to run once as a final step
 
 last_orders() {
+	pprint 2 "Last orders"
+
+	# Let all users remove the target dir
+	chmod 777 ${TARGET_DIR}
+
 	# Tag this target in local git repo
 	[ -z "$(git tag | grep ^$TARGET$)" ] &&	git tag "$TARGET"
 
-	# Increment build number if set in conf
-	increment_build_num
-
-	# Let all users remove the target dir
-	chmod 777 ${TARGET_DIR}*
-
-	# Run release functions if this is a release build
-	run_release
+	[ -z "${BUILD_NUM:-}" ] || increment_build_num
 }
 
 increment_build_num() {
@@ -445,7 +443,6 @@ compress_kernel() {
 # Progress Print
 #	Print $2 at level $1.
 pprint() {
-    $release_build && return 0
     if [ "$1" -le $PPLEVEL ]; then
 	runtime=$(( `date +%s` - $BUILD_STARTTIME ))
 	printf "%s %.${1}s %s\n" "`date -u -r $runtime +%H:%M:%S`" "#####" "$2" 1>&3
@@ -454,7 +451,7 @@ pprint() {
 
 usage () {
 	(
-	echo "Usage: $0 [-qvas -D <target dir> -A <dir to archive> -p <project dir> ] -c conf-file"
+	echo "Usage: $0 [-qvas r <release dir> -D <target dir> -A <dir to archive> -p <project dir> ] -c conf-file"
 	echo ""
 	echo "Compulsory:"
 	echo "  -c	Specify conf file"
@@ -470,7 +467,7 @@ usage () {
 	echo "Other:"
 	echo "  -q	Make output more quiet"
 	echo "  -v	Make output more verbose"
-	echo "  -r      Release Build output - only print image name and path during build"
+	echo "  -r      Release Build - run release functions and store everything to release directory"
 	echo "  -p	Specify dir containing the projects conf files (default is relative to conf file)."
 	echo "    	Usefull when using a conf file not in the same directory as the project files"
 	) 1>&2
@@ -492,7 +489,7 @@ if [ $# -eq 0 ] ; then
 fi
 
 set +e
-args=`getopt c:p:A:D:asqrhv $*`
+args=`getopt c:p:A:D:asqr:hv $*`
 [ $? -ne 0 ] && usage
 set -e
 
@@ -507,7 +504,7 @@ do
 	-A) archive_only=true; export ARCHIVE_IN="$2";  shift; shift;;
 	-s) skip_img_build=true; shift;;
 	-p) export PROJ_DIR_IN="$2"; shift; shift;;
-	-r) export release_build=true; shift;;
+	-r) export release_build=true; export STORE_DIR_IN="$2"; shift; shift;;
 	-h) usage;;
 	-q) PPLEVEL=$(($PPLEVEL - 1)); shift;;
 	-v) PPLEVEL=$(($PPLEVEL + 1)); shift;;
@@ -548,7 +545,8 @@ CONF_FILE=$(realpath "$CONF_FILE")
 set -e
 
 # If the user has given a BUILD_NUM process it
-[ -z "$BUILD_NUM" ] || ADD_BUILD_NUM="_$BUILD_NUM"
+$release_build && unset BUILD_NUM
+[ -n "${BUILD_NUM:-}" ] && ADD_BUILD_NUM="_$BUILD_NUM"
 
 # Get the base info from compressed archive
 base_info=$(tar -xJqOf $BASE_BINARY _.w/RELEASE.txt)
@@ -561,6 +559,11 @@ BUILD_VERSION=$(date '+%Y%m%d')
 TARGET=${PROJECT}_${EXTRA_DESC:-GENERIC}_b${BSD_VERSION}-${BASE_VERSION:-0.0}_${BUILD_VERSION}${ADD_BUILD_NUM:-}
 TARGET_DIR="${BUILD_DIR}/${TARGET}"
 WORLDDIR=${TARGET_DIR}/_.w
+
+if $release_build; then
+	IMG_STORE_DIR="${STORE_DIR_IN}/$TARGET"
+	mkdir -p "$IMG_STORE_DIR"
+fi
 
 BUILD_STARTTIME=`date +%s`
 
@@ -629,5 +632,7 @@ last_orders
 
 pprint 1 "$PROJECT image completed successfully"
 
+# If !"release (-r) is given then run separate release functions
+$release_build && run_release_functions
 
 exit 0
