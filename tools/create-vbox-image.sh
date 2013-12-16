@@ -84,12 +84,11 @@ which -s VBoxManage || die "You do not have VBoxManage installed"
 IMG_DIR=$(dirname "$IMG")
 SCRIPT_DIR=$(dirname "$0")
 
-
 # Final image location/name
 IMG_NAME=$(basename "$IMG")
 DD_DISK_NAME=$(echo "$IMG_NAME" | awk -F'.img.xz' '{print $1}')
 
-DD_DISK_IMAGE="${SCRIPT_DIR}/$DD_DISK_NAME"
+DD_DISK_IMAGE="${IMG_DIR}/$DD_DISK_NAME"
 VDI_IMAGE="${DD_DISK_IMAGE}.vdi"
 
 PROJECT=$(echo "$DD_DISK_NAME" | awk -F'_' '{print $1}')
