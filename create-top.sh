@@ -449,7 +449,7 @@ usage () {
 	echo "Other:"
 	echo "  -q	Make output more quiet"
 	echo "  -v	Make output more verbose"
-	echo "  -r      Release Build - run release functions and store everything to release directory"
+	echo "  -r	Release Build - run release commands and store outputs in specified release directory"
 	echo "  -p	Specify dir containing the projects conf files (default is relative to conf file)."
 	echo "    	Usefull when using a conf file not in the same directory as the project files"
 	) 1>&2
