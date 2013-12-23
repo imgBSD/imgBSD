@@ -145,18 +145,32 @@ install_packages ( ) (
 	pprint 3 "log: ${TARGET_DIR}/logs/install_packages"
 
 	(
-	mkdir ${WORLDDIR}/packages
-	mkdir -p ${WORLDDIR}/usr/local/etc
-	mkdir -p ${WORLDDIR}/var/cache/pkg/All
+	mkdir -p ${WORLDDIR}/packages ${WORLDDIR}/var/cache/pkg/All
+	rm ${WORLDDIR}/etc/pkg/FreeBSD.conf
 
-	trap "echo 'Running exit trap code' ; umount -f ${PACKAGE_DIR} ; umount -f ${PACKAGE_DIR}/All" 1 2 15 EXIT
+	echo 'FreeBSD: {
+url: "file:///packages",
+mirror_type: "srv",
+enabled: yes
+}' > ${WORLDDIR}/etc/pkg/imgBSD.conf
+
+	do_package_install
+
+	# Remove the package repo settings
+	rm -rf ${WORLDDIR}/etc/pkg/imgBSD.conf
+	mv ${WORLDDIR}/pkg_install.log ${TARGET_DIR}/logs
+	mv ${WORLDDIR}/pkg_info.log ${TARGET_DIR}/logs
+
+	) > ${TARGET_DIR}/logs/install_packages 2>&1
+)
+
+do_package_install() {
+
+	trap "echo 'Running exit trap code' ; umount -f ${WORLDDIR}/packages ;
+		umount -f ${WORLDDIR}/var/cache/pkg/All" 1 2 15 EXIT
 
 	mount_nullfs -o ro ${PACKAGE_DIR} ${WORLDDIR}/packages
 	mount_nullfs -o ro ${PACKAGE_DIR}/All ${WORLDDIR}/var/cache/pkg/All
-
-	echo "packagesite: file:///packages" >> ${WORLDDIR}/usr/local/etc/pkg.conf
-
-	cp /usr/bin/install-info ${WORLDDIR}/usr/bin
 
 	while read line; do
 		[ -z "$line" ] && continue
@@ -165,18 +179,15 @@ install_packages ( ) (
 		packages="${packages:-} $line"
 	done < ${PORT_LIST}
 
-	chroot ${WORLDDIR} sh -c "env ASSUME_ALWAYS_YES=1 pkg install $packages > /pkg_install.log"
+	chroot ${WORLDDIR} sh -c \
+	    "env ASSUME_ALWAYS_YES=1 pkg install $packages > /pkg_install.log ;
+	     pkg info > /pkg_info.log"
 
-	umount -f ${PACKAGE_DIR}
-	umount -f ${PACKAGE_DIR}/All
+	umount -f ${WORLDDIR}/packages
+	umount -f ${WORLDDIR}/var/cache/pkg/All
+
         trap - 1 2 15 EXIT
-
-	# Remove the package repo settings
-	rm ${WORLDDIR}/usr/local/etc/pkg.conf
-	mv ${WORLDDIR}/pkg_install.log  ${TARGET_DIR}/logs
-
-	) > ${TARGET_DIR}/logs/install_packages 2>&1
-)
+}
 
 setup_etc ( ) (
         pprint 2 "configure /etc"
