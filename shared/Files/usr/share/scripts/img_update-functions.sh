@@ -157,11 +157,7 @@ overlay_has_files() {
 
 	[ -d "$overlay_dir" ] || return 1
 
-	if [ "$(ls -A $overlay_dir > /dev/null 2>&1)" ]; then
-		return 0
-	else
-		return 1
-	fi
+	[ -n "$(ls -A $overlay_dir > /dev/null 2>&1)" ] || return 1
 } 
 
 do_overlay_copy() {

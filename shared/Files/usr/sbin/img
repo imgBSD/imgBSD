@@ -33,7 +33,7 @@ set -u
 usage() {
 	echo "	network	- automated network update"
 	echo "	local 	- upgrade from file <local of image>"
-	#echo "	switch 	- boot into other image, useful when just changing loader.conf"
+	echo "	switch 	- boot into other image, useful when just changing loader.conf"
 	echo "	recover	- Booting a new image has failed and you wish to go back"
 	echo "	info 	- show partition info"
 	exit 1
