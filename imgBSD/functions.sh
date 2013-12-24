@@ -62,7 +62,7 @@ project_setup() {
 }
 
 project_late_setup() {
-
+	echo "empty"
 }
 
 create_guest_account() {
