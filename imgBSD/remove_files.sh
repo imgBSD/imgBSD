@@ -59,12 +59,6 @@ main_remove() {
 	AFTER=`du -m -d 0 ${WORLDDIR} | awk '{ print $1 }'`
 	echo "### Size before=" $BEFORE " size after=" $AFTER
 
-	# Move termcap.small file
-	if [ -f ${WORLDDIR}/etc/termcap.small ]; then
-		echo "Using termcap.small"
-		mv ${WORLDDIR}/etc/termcap.small ${WORLDDIR}/usr/share/misc/termcap.db
-	fi
-
 	FILES_TO_REMOVE='
 	#usr/local/share/gnome-doc-utils
 	usr/local/share/emacs

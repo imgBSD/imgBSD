@@ -59,6 +59,12 @@ project_setup() {
 	echo "/dev/ufs/Home /usr/home ufs rw,noatime 0 0" >> ${WORLDDIR}/etc/fstab
 	echo "/home/.system/pbi /usr/pbi unionfs rw 0 0" >> ${WORLDDIR}/etc/fstab
 	echo "/home/.system/var_db /var/db unionfs rw 0 0" >> ${WORLDDIR}/etc/fstab
+
+	# Move termcap.small file
+	if [ -f ${WORLDDIR}/etc/termcap.small ]; then
+		echo "Using termcap.small"
+		mv ${WORLDDIR}/etc/termcap.small ${WORLDDIR}/usr/share/misc/termcap.db
+	fi
 }
 
 project_late_setup() {
