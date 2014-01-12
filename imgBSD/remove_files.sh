@@ -56,6 +56,7 @@ main_remove() {
 
 	BEFORE=`du -m -d 0 \${WORLDDIR} | awk '{ print $1 }'`
 
+	# Remove all .a files
 	find ${WORLDDIR}/usr/local -name *.a | xargs rm -rvRf
 
 	AFTER=`du -m -d 0 ${WORLDDIR} | awk '{ print $1 }'`
@@ -65,26 +66,18 @@ main_remove() {
 	#usr/local/share/gnome-doc-utils
 	usr/local/share/emacs
 	usr/local/share/gnome-about
-
 	usr/share/misc/magic.mgc
 	usr/share/zoneinfo
 	usr/share/examples
-
 	usr/sbin/tcpdump
 	usr/sbin/burncd
 	usr/sbin/cdcontrol
 	usr/sbin/mptutil
-
 	usr/sbin/wire-test
-
 	usr/bin/nex
-
 	usr/local/bin/pkg-config
 	usr/local/bin/gtk-demo
 
-	#boot/pxeboot
-
-	#usr/local/share/compiz/reflection.png
 	usr/local/sbin/pkg-static
 	'
 
