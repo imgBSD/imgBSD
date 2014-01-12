@@ -25,6 +25,7 @@
 #
 
 go_remove() {
+	set +x
 	BEFORE=`du -m -d 0 \${WORLDDIR} | awk '{ print $1 }'`
 
 	DIRECTORY="$1"
@@ -48,6 +49,7 @@ go_remove() {
 
 	AFTER=`du -m -d 0 ${WORLDDIR} | awk '{ print $1 }'`
 	echo "### Size before=" $BEFORE " size after=" $AFTER
+	set -x
 }
 
 main_remove() {
