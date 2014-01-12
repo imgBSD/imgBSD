@@ -300,16 +300,16 @@ compress_image ( ) (
 	cd ${IMG_CONSTRUCT_DIR}
 
 	if which -s pixz; then
-		pixz "${TARGET}.img"
+	    pixz "${TARGET}.img"
 	else
-		echo "Consider installing pixz to speed up compression time on multicore systems."
-		xz "${TARGET}.img"
+	    echo "Consider installing pixz to speed up compression time on multicore systems."
+	    xz "${TARGET}.img"
 	fi
 
 	md5 "${TARGET}.img.xz" > "${TARGET}.img.xz.md5"
 
 	[ "$IMG_CONSTRUCT_DIR" = "$IMG_STORE_DIR" ] ||
-		mv ${TARGET}.img* $IMG_STORE_DIR
+	    mv ${TARGET}.img* $IMG_STORE_DIR
 
 	# Let all users remove the image
 	chmod 777 $IMG_STORE_DIR/${TARGET}*
@@ -331,13 +331,13 @@ release_info ( ) {
 	echo "OS_SIZE=$(du -sm $WORLDDIR | awk '{print $1}')MB" >> $release_file
 
 	# get contents of conf file
-	cat "$CONF_FILE" | grep -w '^PORTS_VERSION\|^EXTRA_DESC\|^BUILD_NUM' | \
-		sed 's/"//g' >> $release_file
+	grep -w '^PORTS_VERSION\|^EXTRA_DESC\|^BUILD_NUM' "$CONF_FILE" | \
+	    sed 's/"//g' >> $release_file
 
 	# Get git sha if available
 	if [ -f .git/refs/heads/master ]; then
-		sha1=$(cat .git/refs/heads/master)
-		echo "GIT_REVISION=$sha1" >> $release_file
+	    sha1=$(cat .git/refs/heads/master)
+	    echo "GIT_REVISION=$sha1" >> $release_file
 	fi
 	) >> ${TARGET_DIR}/logs/release_info 2>&1
 }
