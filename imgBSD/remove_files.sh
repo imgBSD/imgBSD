@@ -81,15 +81,6 @@ main_remove() {
 
 	usr/local/bin/pkg-config
 	usr/local/bin/gtk-demo
-	usr/local/bin/shadowtex
-	usr/local/bin/mysqlaccess
-	usr/local/bin/mysql_waitpid
-	usr/local/bin/mysqlbinlog
-	usr/local/bin/mysqlslap
-	usr/local/bin/mysqlcheck
-	usr/local/bin/mysqldump
-	usr/local/bin/mysqlimport
-	usr/local/bin/mysqladmin
 
 	#boot/pxeboot
 
